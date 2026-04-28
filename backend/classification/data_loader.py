@@ -28,15 +28,11 @@ def load_paths_and_labels(base_dir):
 
 
 def parse_image(file_path, fruit_label, ripe_label):
-    # Đọc file ảnh từ ổ cứng
-    img = tf.io.read_file(file_path)
-    # Giải mã ảnh JPEG/PNG
-    img = tf.image.decode_jpeg(img, channels=3)
-    # Resize về 224x224
-    img = tf.image.resize(img, config.IMG_SIZE)
+    img = tf.io.read_file(file_path)                # Đọc file ảnh từ ổ cứng
+    img = tf.image.decode_jpeg(img, channels=3)     # Giải mã ảnh JPEG/PNG
+    img = tf.image.resize(img, config.IMG_SIZE)     # Resize về 224x224
+    return img, (fruit_label, ripe_label)           # Trả về 1 ảnh đi kèm với 1 tuple chứa 2 nhãn
 
-    # Quan trọng nhất: Trả về 1 ảnh đi kèm với 1 tuple chứa 2 nhãn
-    return img, (fruit_label, ripe_label)
 
 
 def get_datasets():
