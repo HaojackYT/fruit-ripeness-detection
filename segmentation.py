@@ -1,1 +1,0 @@
-python backend/image-preprocessing/pipeline.py --image dataset/ripe/apple/1/apple_ripe_1.jpg --output backend/image-preprocessing/out/apple_ripe_1_pre.jpg --save-hsv-npy backend/image-preprocessing/out/apple_ripe_1_pre.npy
