@@ -132,11 +132,11 @@ def _extract_roi_with_config(img_bgr: np.ndarray, config: Dict[str, Any]) -> np.
     # TODO
     sat_thresh = int(config.get("auto_roi_sat_thresh", 35))
     val_thresh = int(config.get("auto_roi_val_thresh", 30))
-    # hsv[:, :, 1] (Kênh Saturation) > sat_thresh: quả thường có độ bão hòa cao hơn nền
-    # hsv[:, :, 2] (Kênh Value) > val_thresh: quả thường có độ sáng cao hơn nền hoặc bóng râm
-    # True: pixel có khả năng thuộc về quả
-    # False: pixel có khả năng thuộc về nền hoặc bóng râm
-    # astype(np.uint8) * 255: chuyển đổi boolean mask thành ảnh nhị phân (True -> 255 hoặc False -> 0)
+    # hsv[:, :, 1]: kênh Saturation
+    # hsv[:, :, 2]: kênh Value
+    # logical_and: trả về True chỉ cho pixel vừa có màu sắc đậm (độ bão hòa cao) vừa đủ sáng (độ sáng cao)
+    # => pixel có khả năng thuộc về quả, ngược lại là nền hoặc bóng râm
+    # astype(np.uint8) * 255: chuyển đổi từ ma trận boolean (True/False) -> ma trận nhị phân (0/1) -> ma trận đen trắng (0/255)
     mask = np.logical_and(hsv[:, :, 1] > sat_thresh, hsv[:, :, 2] > val_thresh).astype(np.uint8) * 255
 
     # 2. Khử nhiễu bằng Morphological Operations
@@ -261,6 +261,6 @@ def resize_and_normalize(img: np.ndarray, config: Optional[Dict[str, Any]] = Non
     # 4. Chuyển sang không gian màu RGB
     rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
 
-    # 5. Chuẩn hóa kiểu dữ liệu và giá trị pixel (mặc định là True)
+    # 5. Chuẩn hóa kiểu dữ liệu đồng nhất cho bước tiếp theo và giá trị pixel [0, 1] (mặc định là True)
     normalize = bool(cfg.get("normalize", True))
     return _normalize_rgb(rgb, normalize=normalize)
