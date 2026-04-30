@@ -1,0 +1,40 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+.venv_broken_*/
+
+# Python cache/compiled
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Packaging/build outputs
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Tests/coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Type checking/lint caches
+.mypy_cache/
+.pytype/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment files
+.env
+.env.*
+
+# OS artifacts
+.DS_Store
+Thumbs.db
