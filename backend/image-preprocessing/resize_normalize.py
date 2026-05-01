@@ -261,6 +261,6 @@ def resize_and_normalize(img: np.ndarray, config: Optional[Dict[str, Any]] = Non
     # 4. Chuyển sang không gian màu RGB
     rgb = cv2.cvtColor(resized, cv2.COLOR_BGR2RGB)
 
-    # 5. Chuẩn hóa kiểu dữ liệu đồng nhất cho bước tiếp theo và giá trị pixel [0, 1] (mặc định là True)
+    # 5. Chuẩn hóa kiểu dữ liệu đồng nhất cho bước tiếp theo và giá trị pixel nằm trong khoảng [0, 1] (mặc định là True)
     normalize = bool(cfg.get("normalize", True))
     return _normalize_rgb(rgb, normalize=normalize)
