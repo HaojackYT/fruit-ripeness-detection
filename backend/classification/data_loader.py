@@ -1,8 +1,19 @@
+import sys
+
+import cv2
+import numpy as np
 import tensorflow as tf
 import os
 import config
 
-# Định nghĩa từ điển để chuyển chữ thành số (AI chỉ hiểu số)
+# Cấu hình đường dẫn để có thể import từ thư mục backend
+current_dir = os.path.dirname(os.path.abspath(__file__))
+backend_dir = os.path.abspath(os.path.join(current_dir, '..'))
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
+
+from image_preprocessing.pipeline import _hsv_to_bgr_u8, preprocess_image
+# Định nghĩa từ điển để chuyển chữ thành số
 FRUIT_LABELS = {'apple': 0, 'mango': 1, 'orange': 2}
 RIPE_LABELS = {'ripe': 0, 'unripe': 1}
 
@@ -27,12 +38,28 @@ def load_paths_and_labels(base_dir):
     return file_paths, fruit_targets, ripe_targets
 
 
-def parse_image(file_path, fruit_label, ripe_label):
-    img = tf.io.read_file(file_path)                # Đọc file ảnh từ ổ cứng
-    img = tf.image.decode_jpeg(img, channels=3)     # Giải mã ảnh JPEG/PNG
-    img = tf.image.resize(img, config.IMG_SIZE)     # Resize về 224x224
-    return img, (fruit_label, ripe_label)           # Trả về 1 ảnh đi kèm với 1 tuple chứa 2 nhãn
+def python_preprocess(file_path_tensor):
+    file_path = file_path_tensor.numpy().decode('utf-8')
+    img = cv2.imread(file_path, cv2.IMREAD_COLOR)
 
+    preprocessed_hsv = preprocess_image(
+        img,
+        config={
+            "input_color_space": "bgr",
+            "target_size": config.IMG_SIZE,
+            "normalize": False
+        }
+    )
+
+    processed_bgr = _hsv_to_bgr_u8(preprocessed_hsv)
+    processed_rgb = cv2.cvtColor(processed_bgr, cv2.COLOR_BGR2RGB)
+
+    return processed_rgb.astype(np.float32)
+
+def parse_image(file_path, fruit_label, ripe_label):
+    img = tf.py_function(func=python_preprocess, inp=[file_path], Tout=tf.float32)
+    img.set_shape([*config.IMG_SIZE, 3])
+    return img, (fruit_label, ripe_label)
 
 
 def get_datasets():

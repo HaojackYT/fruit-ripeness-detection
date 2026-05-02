@@ -1,29 +1,69 @@
+import os
+import sys
+
+import cv2
 import tensorflow as tf
 import numpy as np
 import config
 
+# 1. Lấy đường dẫn tuyệt đối của thư mục chứa file predict.py (thư mục 'classification')
+current_dir = os.path.dirname(os.path.abspath(__file__))
+
+# 2. Lùi lại 1 cấp để ra thư mục cha (thư mục 'backend')
+backend_dir = os.path.abspath(os.path.join(current_dir, '..'))
+
+# 3. Thêm thư mục 'backend' vào hệ thống đường dẫn (PATH) của Python
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
+    
+from image_preprocessing import preprocess_image
+from image_preprocessing.pipeline import _hsv_to_bgr_u8
+
 
 def predict_single_image(image_path):
+    print("Đang tải mô hình...")
     model = tf.keras.models.load_model(config.MODEL_SAVE_PATH)
 
-    with open(config.CLASSES_SAVE_PATH, 'r', encoding='utf-8') as f:
-        class_names = f.read().splitlines()
+    # 1. Đọc ảnh thô
+    img_bgr = cv2.imread(image_path, cv2.IMREAD_COLOR)
+    if img_bgr is None:
+        print(f"LỖI: Không thể đọc ảnh từ đường dẫn: {image_path}")
+        return
 
-    img = tf.keras.utils.load_img(image_path, target_size=config.IMG_SIZE)
-    img_array = tf.keras.utils.img_to_array(img)
-    img_array = tf.expand_dims(img_array, 0)
+    # 2. CHUYỂN SANG RGB NGAY LẬP TỨC (Sửa lỗi màu sắc)
+    img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
 
+    # 3. Đưa ảnh RGB chuẩn vào Pipeline Tiền xử lý
+    processed_hsv = preprocess_image(
+        img_rgb,
+        config={
+            "input_color_space": "rgb",
+            "target_size": config.IMG_SIZE,
+            "normalize": False
+        }
+    )
+    processed_bgr = _hsv_to_bgr_u8(processed_hsv)
+    processed_rgb = cv2.cvtColor(processed_bgr, cv2.COLOR_BGR2RGB)
+
+    # 5. Mở rộng chiều (batch dimension)
+    img_array = tf.expand_dims(processed_rgb, 0)
+
+    # Model returns [fruit_output, ripe_output]
     predictions = model.predict(img_array)
-    score = tf.nn.softmax(predictions[0])
 
-    predicted_class = class_names[np.argmax(score)]
-    confidence = 100 * np.max(score)
+    fruit_pred = predictions[0]
+    ripe_pred = predictions[1]
 
-    print(f"Kết quả: {predicted_class} (Độ tự tin: {confidence:.2f}%)")
+    predicted_fruit = config.FRUIT_CLASSES[np.argmax(fruit_pred[0])]
+    fruit_confidence = 100 * np.max(fruit_pred[0])
+
+    predicted_ripe = config.RIPE_CLASSES[np.argmax(ripe_pred[0])]
+    ripe_confidence = 100 * np.max(ripe_pred[0])
+
+    print(f"Loại quả: {predicted_fruit} (Độ tự tin: {fruit_confidence:.2f}%)")
+    print(f"Độ chín: {predicted_ripe} (Độ tự tin: {ripe_confidence:.2f}%)")
 
 
 if __name__ == '__main__':
-    # Test thử 1 ảnh ngẫu nhiên trong tập val
-    # Nhớ thay đổi đường dẫn này trúng với ảnh thực tế trên máy bạn
-    test_img = 'dataset/val/xoai_chin/image_1.jpg'
+    test_img = config.IMAGE_PATH
     predict_single_image(test_img)

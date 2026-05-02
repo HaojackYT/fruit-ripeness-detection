@@ -10,10 +10,6 @@ app = FastAPI(title="Hệ thống phân loại Trái cây (API)")
 print("Đang khởi động hệ thống AI...")
 model = tf.keras.models.load_model(config.MODEL_SAVE_PATH)
 
-with open(config.CLASSES_SAVE_PATH, 'r', encoding='utf-8') as f:
-    CLASS_NAMES = f.read().splitlines()
-
-
 @app.post("/predict")
 async def predict_image(file: UploadFile = File(...)):
     try:
@@ -25,16 +21,24 @@ async def predict_image(file: UploadFile = File(...)):
         img_array = tf.expand_dims(img_array, 0)
 
         predictions = model.predict(img_array)
-        score = tf.nn.softmax(predictions[0])
+        fruit_pred = predictions[0]
+        ripe_pred = predictions[1]
 
-        predicted_class = CLASS_NAMES[np.argmax(score)]
-        confidence = float(np.max(score)) * 100
+        predicted_fruit = config.FRUIT_CLASSES[np.argmax(fruit_pred[0])]
+        fruit_confidence = float(np.max(fruit_pred[0])) * 100
+
+        predicted_ripe = config.RIPE_CLASSES[np.argmax(ripe_pred[0])]
+        ripe_confidence = float(np.max(ripe_pred[0])) * 100
 
         return {
             "status": "success",
             "filename": file.filename,
-            "prediction": predicted_class,
-            "confidence": f"{confidence:.2f}%"
+            "prediction": {
+                "fruit": predicted_fruit,
+                "fruit_confidence": f"{fruit_confidence:.2f}%",
+                "ripeness": predicted_ripe,
+                "ripeness_confidence": f"{ripe_confidence:.2f}%"
+            }
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}

@@ -6,16 +6,16 @@ from model import build_efficientnet_model
 
 
 def train():
-    # 1. Đảm bảo thư mục lưu trữ tồn tại [cite: 524]
+    # 1. Đảm bảo thư mục lưu trữ tồn tại
     os.makedirs(config.MODEL_SAVE_DIR, exist_ok=True)
 
-    # 2. Nạp dữ liệu đa nhãn [cite: 532]
+    # 2. Nạp dữ liệu đa nhãn
     train_dataset, val_dataset = get_datasets()
     augmentation_layer = get_augmentation()
 
     print(f"Hệ thống huấn luyện: {config.FRUIT_CLASSES} và {config.RIPE_CLASSES}")
 
-    # 3. Xây dựng mô hình 2 nhánh [cite: 515, 544]
+    # 3. Xây dựng mô hình 2 nhánh
     # Truyền vào số lượng lớp của cả 2 nhánh từ config
     model = build_efficientnet_model(
         input_shape=(*config.IMG_SIZE, 3),
@@ -37,25 +37,34 @@ def train():
         }
     )
 
-    # 5. Cấu hình lưu nhiều phiên bản (Checkpoint) [cite: 526, 527]
-    checkpoint_path = os.path.join(config.MODEL_SAVE_DIR, "model_epoch_{epoch:02d}_val_loss_{val_loss:.2f}.h5")
+    # 5. Cấu hình CHỈ LƯU 1 MODEL TỐT NHẤT
+    # Đặt tên file cố định để Keras tự động ghi đè lên file cũ khi có model tốt hơn
+    # Cấu hình lưu Model xịn nhất
+    checkpoint_path = os.path.join(config.MODEL_SAVE_DIR, "best_model.h5")
     checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_path,
-        save_best_only=True,  # Chỉ lưu những phiên bản tốt nhất để tiết kiệm bộ nhớ [cite: 528, 529]
+        save_best_only=True,
         monitor='val_loss',
+        mode='min',
         verbose=1
     )
 
+    # VŨ KHÍ MỚI: Tự động dừng khi hết tiến triển
+    early_stopping_callback = tf.keras.callbacks.EarlyStopping(
+        monitor='val_loss',  # Vẫn theo dõi lỗi trên tập Validation
+        patience=5,  # Nếu sau 5 Epochs mà val_loss không giảm thì dừng luôn
+        restore_best_weights=True  # Tự động lùi về phiên bản có trọng số tốt nhất
+    )
+
     print("Bắt đầu quá trình huấn luyện Multi-task...")
-    # Khi fit, Keras sẽ tự khớp tuple nhãn từ data_loader vào 2 nhánh đầu ra [cite: 546, 551]
     history = model.fit(
         train_dataset,
         validation_data=val_dataset,
-        epochs=config.EPOCHS,
-        callbacks=[checkpoint_callback]
+        epochs=50,  # Cứ set 50 thoải mái, nó sẽ tự dừng sớm
+        callbacks=[checkpoint_callback, early_stopping_callback]  # Gọi cả 2 callback vào
     )
 
-    print(f"Huấn luyện hoàn tất! Các phiên bản model nằm trong: {config.MODEL_SAVE_DIR}")
+    print(f"Huấn luyện hoàn tất! Model xuất sắc nhất đã được lưu tại: {checkpoint_path}")
 
 
 if __name__ == '__main__':
