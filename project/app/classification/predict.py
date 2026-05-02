@@ -1,23 +1,18 @@
 import os
 import sys
 
+# Đưa thư mục project vào PYTHONPATH để Python hiểu được "from app..."
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+if project_dir not in sys.path:
+    sys.path.append(project_dir)
+
 import cv2
 import tensorflow as tf
 import numpy as np
 import config
 
-# 1. Lấy đường dẫn tuyệt đối của thư mục chứa file predict.py (thư mục 'classification')
-current_dir = os.path.dirname(os.path.abspath(__file__))
-
-# 2. Lùi lại 1 cấp để ra thư mục cha (thư mục 'backend')
-backend_dir = os.path.abspath(os.path.join(current_dir, '..'))
-
-# 3. Thêm thư mục 'backend' vào hệ thống đường dẫn (PATH) của Python
-if backend_dir not in sys.path:
-    sys.path.append(backend_dir)
-    
-from image_preprocessing import preprocess_image
-from image_preprocessing.pipeline import _hsv_to_bgr_u8
+from app.image_preprocessing.pipeline import preprocess_image, _hsv_to_bgr_u8
 
 
 def predict_single_image(image_path):

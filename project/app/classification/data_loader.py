@@ -1,18 +1,18 @@
 import sys
+import os
+
+# Đưa thư mục project vào PYTHONPATH để Python hiểu được "from app..."
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.abspath(os.path.join(current_dir, '..', '..'))
+if project_dir not in sys.path:
+    sys.path.append(project_dir)
 
 import cv2
 import numpy as np
 import tensorflow as tf
-import os
 import config
+from app.image_preprocessing.pipeline import preprocess_image, _hsv_to_bgr_u8
 
-# Cấu hình đường dẫn để có thể import từ thư mục backend
-current_dir = os.path.dirname(os.path.abspath(__file__))
-backend_dir = os.path.abspath(os.path.join(current_dir, '..'))
-if backend_dir not in sys.path:
-    sys.path.append(backend_dir)
-
-from image_preprocessing.pipeline import _hsv_to_bgr_u8, preprocess_image
 # Định nghĩa từ điển để chuyển chữ thành số
 FRUIT_LABELS = {'apple': 0, 'mango': 1, 'orange': 2}
 RIPE_LABELS = {'ripe': 0, 'unripe': 1}

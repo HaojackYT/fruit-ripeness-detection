@@ -9,7 +9,10 @@ def build_efficientnet_model(input_shape, num_fruit_classes, num_ripe_classes, a
     )
 
     # Đóng băng các trọng số của mô hình cơ sở (Transfer Learning)
-    base_model.trainable = False
+    base_model.trainable = True
+
+    for layer in base_model.layers[:100]:
+        layer.trainable = False
 
     # 2. Xây dựng đầu vào và đi qua các lớp chung
     inputs = tf.keras.Input(shape=input_shape)
