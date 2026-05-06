@@ -1,82 +1,98 @@
 from __future__ import annotations
 
+import os
 import uuid
 from typing import Any
 
+import cv2
+import numpy as np
+import tensorflow as tf
 
-MODEL_NAME = "SVM (RBF Kernel)"
+from app.image_preprocessing.pipeline import preprocess_image, _hsv_to_bgr_u8
+
+MODEL_NAME = "EfficientNetB0 (CNN)"
 MODEL_VERSION = "1.0.0"
-FEATURE_SET = "color_histogram + texture_lbp + edge_density"
+FEATURE_SET = "deep_features"
 PIPELINE_SCOPE = "single_object_realistic_condition"
-SUPPORTED_FRUITS = ["apple", "banana", "orange", "mango"]
+SUPPORTED_FRUITS = ["apple", "mango", "orange"]
 
+# Tải mô hình toàn cục để không phải tải lại mỗi lần gọi API
+current_dir = os.path.dirname(os.path.abspath(__file__))
+model_path = os.path.join(current_dir, '..', 'classification', 'saved_model', 'best_model.h5')
 
-def _extract_feature_summary(image_bytes: bytes) -> dict[str, float]:
-    """Extract lightweight numeric descriptors to mimic a feature-based pipeline."""
-    if not image_bytes:
-        raise ValueError("Image payload is empty.")
-
-    sample = image_bytes[: min(len(image_bytes), 40_000)]
-    length = len(sample)
-    byte_mean = sum(sample) / length
-    variance = sum((value - byte_mean) ** 2 for value in sample) / length
-    byte_std = variance ** 0.5
-
-    high_ratio = sum(1 for value in sample if value >= 200) / length
-    low_ratio = sum(1 for value in sample if value <= 55) / length
-    entropy_proxy = len(set(sample)) / 256
-
-    return {
-        "byte_mean": round(byte_mean, 4),
-        "byte_std": round(byte_std, 4),
-        "high_intensity_ratio": round(high_ratio, 4),
-        "low_intensity_ratio": round(low_ratio, 4),
-        "entropy_proxy": round(entropy_proxy, 4),
-    }
-
-
-def _predict_label(feature_summary: dict[str, float]) -> tuple[str, str, float]:
-    """Return fruit type, ripeness label and confidence from extracted features."""
-    mean = feature_summary["byte_mean"]
-    std = feature_summary["byte_std"]
-    high_ratio = feature_summary["high_intensity_ratio"]
-    entropy = feature_summary["entropy_proxy"]
-
-    if high_ratio > 0.26:
-        fruit_type = "banana"
-    elif mean > 145 and std < 58:
-        fruit_type = "apple"
-    elif std > 72:
-        fruit_type = "orange"
-    else:
-        fruit_type = "mango"
-
-    ripeness_score = 0.55 * high_ratio + 0.30 * entropy + 0.15 * (mean / 255)
-    ripeness = "ripe" if ripeness_score >= 0.34 else "unripe"
-
-    confidence = min(0.97, max(0.55, 0.57 + abs(ripeness_score - 0.34) * 1.2))
-    return fruit_type, ripeness, round(confidence, 4)
+try:
+    print(f"Đang tải mô hình CNN từ: {model_path}")
+    model = tf.keras.models.load_model(model_path)
+except Exception as e:
+    model = None
+    print(f"LỖI: Không thể tải mô hình: {e}")
 
 
 def predict_image(image_bytes: bytes) -> dict[str, Any]:
-    """Predict fruit type and ripeness for a single image."""
-    feature_summary = _extract_feature_summary(image_bytes)
-    fruit_type, ripeness, confidence = _predict_label(feature_summary)
-
-    result_label = f"{fruit_type.title()} {'Ripe' if ripeness == 'ripe' else 'Unripe'}"
+    """Predict fruit type and ripeness for a single image using CNN."""
     prediction_id = uuid.uuid4().hex[:12]
+    
+    if model is None:
+        raise RuntimeError("Mô hình CNN chưa được tải thành công.")
+
+    # 1. Chuyển đổi bytes thành numpy array và đọc ảnh
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+    if img_bgr is None:
+        raise ValueError("Dữ liệu ảnh không hợp lệ.")
+
+    # 2. Chuyển sang RGB
+    img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+
+    # 3. Tiền xử lý (giống với predict.py trong classification)
+    processed_hsv = preprocess_image(
+        img_rgb,
+        config={
+            "input_color_space": "rgb",
+            "target_size": (224, 224),
+            "normalize": False
+        }
+    )
+    processed_bgr = _hsv_to_bgr_u8(processed_hsv)
+    processed_rgb = cv2.cvtColor(processed_bgr, cv2.COLOR_BGR2RGB)
+
+    # 4. Mở rộng chiều (batch dimension)
+    img_array = tf.expand_dims(processed_rgb, 0)
+
+    # 5. Dự đoán
+    predictions = model.predict(img_array)
+
+    fruit_pred = predictions[0]
+    ripe_pred = predictions[1]
+
+    # Nhãn cấu hình
+    FRUIT_CLASSES = ['apple', 'mango', 'orange']
+    RIPE_CLASSES = ['ripe', 'unripe']
+
+    predicted_fruit = FRUIT_CLASSES[np.argmax(fruit_pred[0])]
+    fruit_confidence = float(np.max(fruit_pred[0]))
+
+    predicted_ripe = RIPE_CLASSES[np.argmax(ripe_pred[0])]
+    ripe_confidence = float(np.max(ripe_pred[0]))
+
+    # Độ tin cậy trung bình để tương thích với frontend hiện tại
+    confidence = (fruit_confidence + ripe_confidence) / 2.0
+
+    result_label = f"{predicted_fruit.title()} {'Ripe' if predicted_ripe == 'ripe' else 'Unripe'}"
 
     return {
         "prediction_id": prediction_id,
-        "fruit_type": fruit_type,
-        "ripeness": ripeness,
-        "ripeness_vi": "chin" if ripeness == "ripe" else "xanh",
+        "fruit_type": predicted_fruit,
+        "ripeness": predicted_ripe,
+        "ripeness_vi": "chín" if predicted_ripe == "ripe" else "xanh",
         "result": result_label,
-        "confidence": confidence,
+        "confidence": round(confidence, 4),
+        "fruit_confidence": round(fruit_confidence, 4),
+        "ripeness_confidence": round(ripe_confidence, 4),
         "model_name": MODEL_NAME,
         "model_version": MODEL_VERSION,
         "pipeline_scope": PIPELINE_SCOPE,
-        "feature_summary": feature_summary,
     }
 
 
@@ -86,8 +102,8 @@ def get_model_info() -> dict[str, Any]:
         "task": "fruit_type_and_ripeness_classification",
         "model_name": MODEL_NAME,
         "model_version": MODEL_VERSION,
-        "ml_paradigm": "feature_based",
-        "classifier": "svm",
+        "ml_paradigm": "deep_learning",
+        "classifier": "cnn_efficientnetb0",
         "feature_set": FEATURE_SET,
         "classes": {
             "fruit_type": SUPPORTED_FRUITS,

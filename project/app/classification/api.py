@@ -1,0 +1,47 @@
+from fastapi import FastAPI, File, UploadFile
+import tensorflow as tf
+import numpy as np
+from PIL import Image
+import io
+import config
+
+app = FastAPI(title="Hệ thống phân loại Trái cây (API)")
+
+print("Đang khởi động hệ thống AI...")
+model = tf.keras.models.load_model(config.MODEL_SAVE_PATH)
+
+@app.post("/predict")
+async def predict_image(file: UploadFile = File(...)):
+    try:
+        contents = await file.read()
+        img = Image.open(io.BytesIO(contents)).convert('RGB')
+
+        img = img.resize(config.IMG_SIZE)
+        img_array = tf.keras.utils.img_to_array(img)
+        img_array = tf.expand_dims(img_array, 0)
+
+        predictions = model.predict(img_array)
+        fruit_pred = predictions[0]
+        ripe_pred = predictions[1]
+
+        predicted_fruit = config.FRUIT_CLASSES[np.argmax(fruit_pred[0])]
+        fruit_confidence = float(np.max(fruit_pred[0])) * 100
+
+        predicted_ripe = config.RIPE_CLASSES[np.argmax(ripe_pred[0])]
+        ripe_confidence = float(np.max(ripe_pred[0])) * 100
+
+        return {
+            "status": "success",
+            "filename": file.filename,
+            "prediction": {
+                "fruit": predicted_fruit,
+                "fruit_confidence": f"{fruit_confidence:.2f}%",
+                "ripeness": predicted_ripe,
+                "ripeness_confidence": f"{ripe_confidence:.2f}%"
+            }
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+# Chạy server bằng lệnh trong terminal:
+# uvicorn api:app --reload
