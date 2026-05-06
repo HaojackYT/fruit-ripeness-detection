@@ -134,12 +134,16 @@ def _extract_roi_with_config(img_bgr: np.ndarray, config: Dict[str, Any]) -> np.
     val_thresh = int(config.get("auto_roi_val_thresh", 30))
     # hsv[:, :, 1]: kênh Saturation
     # hsv[:, :, 2]: kênh Value
-    # logical_and: trả về True chỉ cho pixel vừa có màu sắc đậm (độ bão hòa cao) vừa đủ sáng (độ sáng cao)
+    # logical_and: trả về True chỉ cho pixel vừa có màu sắc đậm (độ bão hòa cao) vừa có độ sáng cao
     # => pixel có khả năng thuộc về quả, ngược lại là nền hoặc bóng râm
     # astype(np.uint8) * 255: chuyển đổi từ ma trận boolean (True/False) -> ma trận nhị phân (0/1) -> ma trận đen trắng (0/255)
     mask = np.logical_and(hsv[:, :, 1] > sat_thresh, hsv[:, :, 2] > val_thresh).astype(np.uint8) * 255
 
     # 2. Khử nhiễu bằng Morphological Operations
+
+    # Fit là Structuring Element khớp hoàn toàn với một phần của ma trận ảnh đầu vào
+    # Hit là Structuring Element khớp ít nhất 1 pixel với một phần của ma trận ảnh đầu vào
+    # Miss là Structuring Element không khớp với bất kỳ pixel nào với một phần của ma trận ảnh đầu vào
 
     # Thiết lập kích thước Structuring Element (kernel) (mặc định là 5)
     # TODO

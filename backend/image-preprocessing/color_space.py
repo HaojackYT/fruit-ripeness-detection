@@ -43,7 +43,7 @@ def rgb_to_hsv(img: np.ndarray, config: Optional[Dict[str, Any]] = None) -> np.n
     """
     Hàm entry-point cho bước "2.2 Color Space Transform" trong pipeline "2. Image Preprocessing".
 
-    Args:
+    Tham số:
         img (np.ndarray): Ma trận ảnh đầu vào (RGB) (có thể là uint8 [0, 255] hoặc float [0, 1]).
         config (Optional[Dict[str, Any]], optional): Dictionary chứa các cấu hình cho pipeline. (mặc định là None)
 

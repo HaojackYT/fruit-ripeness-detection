@@ -34,7 +34,7 @@ DEFAULT_PREPROCESS_CONFIG: Dict[str, Any] = {
     "target_size": (256, 256),
     "normalize": True,
     "gamma": 1.0,
-    "auto_gamma": False,
+    "auto_gamma": True,
     "target_mean_v": 0.55,
     "gaussian_kernel": 5,
     "gaussian_sigma": 0.0,

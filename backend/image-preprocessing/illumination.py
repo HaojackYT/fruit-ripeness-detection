@@ -39,7 +39,7 @@ def _estimate_gamma(v_channel: np.ndarray, target_mean: float) -> float:
         float: Hệ số gamma đã được tính toán (giới hạn trong khoảng [0.35, 2.5]).
     """
     target = float(np.clip(target_mean, 0.05, 0.95))
-    # np.mean: tính trung bình cộng của các phần tử trong mảng
+    # np.mean: tính trung bình cộng của các tọa độ (x, y) trong mảng
     # mean = 0 (ảnh tối) => log(0) = âm vô cùng
     # mean = 1 (ảnh sáng) => log(1) = 0 => gamma = log(target) / 0 => không xác định
     current = float(np.clip(np.mean(v_channel), 1e-6, 1.0 - 1e-6))
@@ -58,8 +58,8 @@ def gamma_correction(hsv_img: np.ndarray, config: Optional[Dict[str, Any]] = Non
 
     Tham số:
         hsv_img (np.ndarray): Ma trận ảnh đầu vào (HSV) cần chuẩn hóa ánh sáng.
-        config (Optional[Dict[str, Any]]): Dictionary chứa các cấu hình cho thuật toán:
-            - "auto_gamma" (bool): Nếu True, tự động tính gamma dựa theo độ sáng ảnh.
+        config (Optional[Dict[str, Any]]): Dictionary chứa các cấu hình cho thuật toán. Hỗ trợ các key:
+            - "auto_gamma" (bool): Nếu True, tự động tính gamma dựa theo độ sáng ảnh (mặc định là False).
             - "target_mean_v" (float): Độ sáng mục tiêu nếu dùng auto_gamma (mặc định 0.55).
             - "gamma" (float): Giá trị gamma tĩnh nếu không dùng auto_gamma (mặc định 1.0).
 
@@ -73,17 +73,17 @@ def gamma_correction(hsv_img: np.ndarray, config: Optional[Dict[str, Any]] = Non
     hsv = _validate_hsv(hsv_img)
     out = hsv.copy()
 
-    # out[:, :, 2] (kênh Value)
+    # out[:, :, 2]: kênh Value
     # Đảm bảo giá trị của kênh Value nằm trong khoảng [0, 1] trước khi áp dụng gamma correction
     v = np.clip(out[:, :, 2], 0.0, 1.0)
 
-    # Kiểm tra auto_gamma có được kích hoạt hay không (mặc định là True)
+    # Kiểm tra auto_gamma có được kích hoạt hay không (mặc định là False)
     if bool(cfg.get("auto_gamma", False)):
         # Ước lượng gamma dựa trên độ sáng của kênh Value và độ sáng mục tiêu (mặc định là 0.55)
         # TODO
         gamma = _estimate_gamma(v, target_mean=float(cfg.get("target_mean_v", 0.55)))
     else:
-        # gamma tĩnh (mặc định là 1.0) => ảnh không thay đổi độ sáng
+        # gamma tĩnh (mặc định là 1.0) không làm thay đổi độ sáng của ảnh
         gamma = float(cfg.get("gamma", 1.0))
 
     if gamma <= 0.0:
