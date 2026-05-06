@@ -1,0 +1,21 @@
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+IMG_SIZE = (224, 224)   # kích cỡ ảnh chuẩn cho EfficientNetB0
+BATCH_SIZE = 32         # số lượng ảnh trong mỗi lần đưa vào mô hình để huấn luyện
+EPOCHS = 50             # số vòng lặp huấn luyện trên toàn bộ tập dữ liệu
+
+FRUIT_CLASSES = ['apple', 'mango', 'orange'] # 3 loại trái cây chính trong dataset, sẽ được dùng để tạo nhãn cho bài toán đa nhãn
+RIPE_CLASSES = ['ripe', 'unripe']            # 2 trạng thái chín của trái cây, cũng sẽ được dùng để tạo nhãn cho bài toán đa nhãn
+
+NUM_FRUIT_CLASSES = len(FRUIT_CLASSES)      # Sẽ bằng 3
+NUM_RIPE_CLASSES = len(RIPE_CLASSES)        # Sẽ bằng 2
+
+DATA_DIR_TRAIN = os.path.join(BASE_DIR, 'dataset', 'train')            # Đường dẫn đến thư mục chứa ảnh huấn luyện.
+DATA_DIR_VAL = os.path.join(BASE_DIR, 'dataset', 'val')                # Đường dẫn đến thư mục chứa ảnh validation.
+
+MODEL_SAVE_DIR = os.path.join(BASE_DIR, 'saved_model')
+MODEL_SAVE_PATH = os.path.join(MODEL_SAVE_DIR, 'best_model.h5')
+
+IMAGE_PATH = '/home/hoang/Downloads/My Documents [01-05-2026 17_04]/2.jpg'
