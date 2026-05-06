@@ -5,6 +5,7 @@ from app.services.model_service import (
     get_model_info,
     predict_image,
 )
+from app.services.segmentation_service import segment_image
 
 router = APIRouter()
 
@@ -45,6 +46,11 @@ async def predict(file: UploadFile = File(...)):
 
     prediction = predict_image(contents)
     prediction["filename"] = file.filename or "uploaded_image"
+
+    try:
+        prediction["segmentation"] = segment_image(contents)
+    except Exception:
+        prediction["segmentation"] = None
 
     # Keep result/confidence for existing frontend while adding richer metadata.
     return JSONResponse(prediction)

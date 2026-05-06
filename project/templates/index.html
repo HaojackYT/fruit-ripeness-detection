@@ -133,20 +133,32 @@
         const data = await response.json();
 
         // Save to sessionStorage and navigate
-        saveAndNavigate(data.result, data.confidence);
+        saveAndNavigate(data);
 
       } catch (err) {
         console.warn('No backend — using demo data:', err.message);
         // Demo fallback
-        saveAndNavigate('Apple Ripe', 0.9978);
+        saveAndNavigate({
+          result: 'Apple Ripe',
+          confidence: 0.9978,
+          segmentation: null,
+        });
       }
     });
 
-    function saveAndNavigate(result, confidence) {
+    function saveAndNavigate(payload) {
       // Save image + result data
       sessionStorage.setItem('frd_image', imageDataURL);
-      sessionStorage.setItem('frd_result', result);
-      sessionStorage.setItem('frd_confidence', confidence);
+      sessionStorage.setItem('frd_result', payload.result);
+      sessionStorage.setItem('frd_confidence', payload.confidence);
+
+      if (payload.segmentation && payload.segmentation.overlay_image) {
+        sessionStorage.setItem('frd_overlay', payload.segmentation.overlay_image);
+        sessionStorage.setItem('frd_mask_ratio', payload.segmentation.mask_ratio ?? '');
+      } else {
+        sessionStorage.removeItem('frd_overlay');
+        sessionStorage.removeItem('frd_mask_ratio');
+      }
 
       // Navigate to result page
       window.location.href = '/result';

@@ -140,6 +140,8 @@
     const imageData  = sessionStorage.getItem('frd_image');
     const resultRaw  = sessionStorage.getItem('frd_result')     || 'Unknown';
     const confidence = parseFloat(sessionStorage.getItem('frd_confidence') || 0);
+    const overlayData = sessionStorage.getItem('frd_overlay');
+    const maskRatio = parseFloat(sessionStorage.getItem('frd_mask_ratio') || 'NaN');
 
     // If no image data, redirect back
     if (!imageData) {
@@ -148,7 +150,7 @@
 
     /* ── Populate images ── */
     document.getElementById('originalImg').src  = imageData;
-    document.getElementById('analysisImg').src  = imageData;
+    document.getElementById('analysisImg').src  = overlayData || imageData;
 
     /* ── Apply analysis overlay tint based on ripeness ── */
     const ripenessKey = getRipenessKey(resultRaw);
@@ -175,10 +177,18 @@
     }, 120);
 
     /* ── Stats (derived / simulated) ── */
-    const mostPct = (pct * 0.97).toFixed(1);
-    const domPct  = (pct * 0.88).toFixed(1);
-    document.getElementById('statMost').textContent     = mostPct + '%';
-    document.getElementById('statDominant').textContent = domPct + '%';
+    const statMost = document.getElementById('statMost');
+    const statDominant = document.getElementById('statDominant');
+    if (!Number.isNaN(maskRatio)) {
+      const maskPct = (maskRatio * 100).toFixed(1);
+      statMost.textContent = maskPct + '%';
+      statDominant.textContent = pctStr;
+    } else {
+      const mostPct = (pct * 0.97).toFixed(1);
+      const domPct  = (pct * 0.88).toFixed(1);
+      statMost.textContent = mostPct + '%';
+      statDominant.textContent = domPct + '%';
+    }
 
     // Color swatch based on ripeness
     const swatchColors = { ripe: '#22c55e', unripe: '#eab308', partial: '#f97316', unknown: '#94a3b8' };
