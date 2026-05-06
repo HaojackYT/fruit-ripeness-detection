@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Result — Fruit Ripeness Detection</title>
+  <link rel="stylesheet" href="/static/css/result.css" />
+</head>
+<body>
+
+  <div class="bg-blob blob-1"></div>
+  <div class="bg-blob blob-2"></div>
+  <div class="bg-blob blob-3"></div>
+
+  <div class="page-wrapper">
+    <div class="dashboard">
+
+      <!-- ── Top header ── -->
+      <div class="dash-header">
+        <h1 class="dash-title">Fruit Ripeness Detection</h1>
+      </div>
+
+      <!-- ── Breadcrumb ── -->
+      <div class="breadcrumb">
+        <svg viewBox="0 0 20 20" fill="currentColor" class="bc-icon" aria-hidden="true">
+          <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+        </svg>
+        <span>Detect</span>
+      </div>
+
+      <!-- ── Main content ── -->
+      <div class="content-grid">
+
+        <!-- LEFT: Images + stats -->
+        <div class="left-panel">
+
+          <div class="images-row">
+            <!-- Original image -->
+            <div class="img-card">
+              <p class="img-label">1. Original image</p>
+              <div class="img-frame">
+                <img id="originalImg" class="result-img" alt="Original" />
+              </div>
+            </div>
+
+            <!-- Analysis image -->
+            <div class="img-card">
+              <p class="img-label">2. Analysis image</p>
+              <div class="img-frame analysis-frame">
+                <img id="analysisImg" class="result-img" alt="Analysis" />
+                <div class="analysis-overlay" id="analysisOverlay"></div>
+              </div>
+
+              <!-- Stats row -->
+              <div class="stats-row">
+                <div class="stat-item">
+                  <span class="stat-label">Most</span>
+                  <span class="stat-unit">%</span>
+                  <div class="stat-box" id="statMost">—</div>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Dominant</span>
+                  <span class="stat-unit">%</span>
+                  <div class="stat-box" id="statDominant">—</div>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">Color</span>
+                  <span class="stat-unit">%</span>
+                  <div class="stat-box" id="statColor">
+                    <div class="color-swatch" id="colorSwatch"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: Prediction + Assessment + Buttons -->
+        <div class="right-panel">
+
+          <!-- Prediction block -->
+          <div class="panel-block">
+            <div class="block-header green-header">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="block-icon">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+              </svg>
+              Prediction
+            </div>
+            <div class="block-body">
+              <p class="prediction-label" id="predictionLabel">—</p>
+              <div class="confidence-wrap">
+                <div class="confidence-track">
+                  <div class="confidence-fill" id="confidenceFill"></div>
+                  <span class="confidence-pct" id="confidencePct">0%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ripeness Assessment block -->
+          <div class="panel-block">
+            <div class="block-header cyan-header">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="block-icon">
+                <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+              Ripeness Assessment
+            </div>
+            <div class="block-body">
+              <div class="ripeness-badges" id="ripenessBadges">
+                <!-- Filled by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Action buttons -->
+          <div class="action-row">
+            <button class="action-btn back-btn" id="backBtn">
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+              </svg>
+              Back
+            </button>
+            <button class="action-btn retry-btn" id="retryBtn">
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/>
+              </svg>
+              Retry
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* ── Load data from sessionStorage ── */
+    const imageData  = sessionStorage.getItem('frd_image');
+    const resultRaw  = sessionStorage.getItem('frd_result')     || 'Unknown';
+    const confidence = parseFloat(sessionStorage.getItem('frd_confidence') || 0);
+    const overlayData = sessionStorage.getItem('frd_overlay');
+    const maskRatio = parseFloat(sessionStorage.getItem('frd_mask_ratio') || 'NaN');
+
+    // If no image data, redirect back
+    if (!imageData) {
+      window.location.href = '/';
+    }
+
+    /* ── Populate images ── */
+    document.getElementById('originalImg').src  = imageData;
+    document.getElementById('analysisImg').src  = overlayData || imageData;
+
+    /* ── Apply analysis overlay tint based on ripeness ── */
+    const ripenessKey = getRipenessKey(resultRaw);
+    const overlay = document.getElementById('analysisOverlay');
+    const tints = { ripe: 'rgba(34,197,94,0.22)', unripe: 'rgba(234,179,8,0.22)', partial: 'rgba(249,115,22,0.22)', unknown: 'rgba(148,163,184,0.18)' };
+    overlay.style.background = tints[ripenessKey] || tints.unknown;
+
+    /* ── Prediction label ── */
+    document.getElementById('predictionLabel').textContent = resultRaw;
+
+    /* ── Confidence bar ── */
+    const pct = Math.round(confidence * 100);
+    const pctStr = (confidence * 100).toFixed(2) + '%';
+    document.getElementById('confidencePct').textContent = pctStr;
+
+    const fill = document.getElementById('confidenceFill');
+    fill.style.width = '0%';
+    setTimeout(() => {
+      fill.style.width = pct + '%';
+      fill.style.background =
+        pct >= 75 ? 'linear-gradient(90deg, #16a34a, #4ade80)' :
+        pct >= 45 ? 'linear-gradient(90deg, #d97706, #fbbf24)' :
+                    'linear-gradient(90deg, #dc2626, #f87171)';
+    }, 120);
+
+    /* ── Stats (derived / simulated) ── */
+    const statMost = document.getElementById('statMost');
+    const statDominant = document.getElementById('statDominant');
+    if (!Number.isNaN(maskRatio)) {
+      const maskPct = (maskRatio * 100).toFixed(1);
+      statMost.textContent = maskPct + '%';
+      statDominant.textContent = pctStr;
+    } else {
+      const mostPct = (pct * 0.97).toFixed(1);
+      const domPct  = (pct * 0.88).toFixed(1);
+      statMost.textContent = mostPct + '%';
+      statDominant.textContent = domPct + '%';
+    }
+
+    // Color swatch based on ripeness
+    const swatchColors = { ripe: '#22c55e', unripe: '#eab308', partial: '#f97316', unknown: '#94a3b8' };
+    document.getElementById('colorSwatch').style.background = swatchColors[ripenessKey];
+
+    /* ── Ripeness badges ── */
+    const levels = ['Ripe', 'Partially Ripe', 'Unripe'];
+    const activeMap = { ripe: 'Ripe', partial: 'Partially Ripe', unripe: 'Unripe', unknown: 'Ripe' };
+    const activeName = activeMap[ripenessKey];
+
+    const container = document.getElementById('ripenessBadges');
+    levels.forEach(level => {
+      const badge = document.createElement('div');
+      badge.className = 'ripeness-badge' + (level === activeName ? ' active' : '');
+      badge.innerHTML = `
+        <div class="badge-dot ${level === activeName ? 'dot-active' : ''}"></div>
+        <span>${level}</span>
+      `;
+      container.appendChild(badge);
+    });
+
+    /* ── Helpers ── */
+    function getRipenessKey(label) {
+      const l = label.toLowerCase();
+      if (l.includes('unripe') || l.includes('xanh')) return 'unripe';
+      if (l.includes('partial') || l.includes('partly') || l.includes('nửa')) return 'partial';
+      if (l.includes('ripe') || l.includes('chín')) return 'ripe';
+      return 'unknown';
+    }
+
+    /* ── Button actions ── */
+    document.getElementById('backBtn').addEventListener('click', () => {
+      window.location.href = '/';
+    });
+
+    document.getElementById('retryBtn').addEventListener('click', () => {
+      window.location.reload();
+    });
+  </script>
+</body>
+</html>
