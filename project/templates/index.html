@@ -147,12 +147,10 @@
     });
 
     function saveAndNavigate(payload) {
+      // Save image + result data
       sessionStorage.setItem('frd_image', imageDataURL);
       sessionStorage.setItem('frd_result', payload.result);
       sessionStorage.setItem('frd_confidence', payload.confidence);
-      sessionStorage.setItem('frd_fruit_type', payload.fruit_type || 'Fruit');
-      sessionStorage.setItem('frd_fruit_conf', payload.fruit_confidence || payload.confidence);
-      sessionStorage.setItem('frd_ripe_conf', payload.ripeness_confidence || payload.confidence);
 
       if (payload.segmentation && payload.segmentation.overlay_image) {
         sessionStorage.setItem('frd_overlay', payload.segmentation.overlay_image);
